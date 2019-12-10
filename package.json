@@ -1,0 +1,14 @@
+{
+  "name": "handmade-promise",
+  "version": "1.0.0",
+  "main": "promise.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": "https://github.com/hankychung/handmade-promise.git",
+  "author": "Han <hanky_chung@hotmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^24.9.0"
+  }
+}

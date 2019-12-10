@@ -10,6 +10,12 @@
  * 如果在executor函数中抛出一个错误，那么该promise 状态为rejected。executor函数的返回值被忽略。
  */
 
+/**
+ * todos
+ * - resolve的又是一个promise
+ * - 单元测试
+ */
+
 const FULFILLED = Symbol(),
   REJECTED = Symbol(),
   PENDING = Symbol()
@@ -84,6 +90,8 @@ class MyPromise {
     }
   }
 }
+
+module.exports = MyPromise
 
 let pro = new MyPromise((resolve, reject) => {
   console.log('start')
