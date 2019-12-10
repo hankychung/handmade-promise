@@ -48,10 +48,25 @@ class MyPromise {
       })
     }
 
-    executor(resolve, reject)
+    // 若执行器执行过程出现错误，立即reject处理
+    try {
+      executor(resolve, reject)
+    } catch (e) {
+      reject(e)
+    }
   }
 
   then(onFulfilled, onRejected) {
+    // 规范onFulfilled函数，默认为返回成功后的值
+    onFulfilled =
+      typeof onFulfilled === 'function' ? onFulfilled : value => value
+    // 规范onRejected函数，默认为抛出异常，若为函数可接住异常并处理
+    onRejected =
+      typeof onRejected === 'function'
+        ? onRejected
+        : error => {
+            throw error
+          }
     if (this.status === FULFILLED) {
       // 若此时promise状态为成功，立即执行onFulfilled
       onFulfilled(this.value)
@@ -73,16 +88,17 @@ class MyPromise {
 let pro = new MyPromise((resolve, reject) => {
   console.log('start')
   setTimeout(() => {
-    resolve('ok')
+    reject('not ok')
   }, 1000)
 })
 
-pro.then(res => {
-  console.log(res)
-})
-
-pro.then(res => {
-  console.log('res1', res)
-})
+pro.then(
+  res => {
+    console.log(res)
+  },
+  reject => {
+    console.log('err', reject)
+  }
+)
 
 console.log('end')
