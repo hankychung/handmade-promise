@@ -10,12 +10,6 @@
  * 如果在executor函数中抛出一个错误，那么该promise 状态为rejected。executor函数的返回值被忽略。
  */
 
-/**
- * todos
- * - resolve的又是一个promise
- * - 单元测试
- */
-
 const FULFILLED = Symbol(),
   REJECTED = Symbol(),
   PENDING = Symbol()
@@ -33,6 +27,13 @@ class MyPromise {
     this.rejects = []
 
     const resolve = value => {
+      /**
+       * 若值是一个MyPromise实例，等待其执行原MyPromise实例传入的resolve/reject函数
+       * 即返回的value.then(resolve, reject)，实际上是原MyPromise将执行的完成嫁接于此MyPromise之上
+       */
+      if (value instanceof MyPromise) {
+        return value.then(resolve, reject)
+      }
       // 异步模拟，实际应为micro task
       // 箭头函数确保this的指向始终为当前的promise实例
       setTimeout(() => {
@@ -45,6 +46,9 @@ class MyPromise {
     }
 
     const reject = reason => {
+      if (reason instanceof MyPromise) {
+        return reason.then(resolve, reject)
+      }
       setTimeout(() => {
         this.status = REJECTED
         this.reason = reason
@@ -92,21 +96,3 @@ class MyPromise {
 }
 
 module.exports = MyPromise
-
-let pro = new MyPromise((resolve, reject) => {
-  console.log('start')
-  setTimeout(() => {
-    reject('not ok')
-  }, 1000)
-})
-
-pro.then(
-  res => {
-    console.log(res)
-  },
-  reject => {
-    console.log('err', reject)
-  }
-)
-
-console.log('end')
