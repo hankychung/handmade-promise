@@ -41,7 +41,7 @@ class MyPromise {
         this.status = FULFILLED
         this.value = value
         this.resolves.forEach(fn => {
-          fn(value)
+          fn()
         })
       })
     }
@@ -55,7 +55,7 @@ class MyPromise {
         this.status = REJECTED
         this.reason = reason
         this.rejects.forEach(fn => {
-          fn(reason)
+          fn()
         })
       })
     }
@@ -80,19 +80,42 @@ class MyPromise {
             throw error
           }
     if (this.status === FULFILLED) {
-      // 若此时promise状态为成功，立即执行onFulfilled
-      onFulfilled(this.value)
-      return
+      // 若此时promise状态为成功，立即执行onFulfilled，并且返回一个新的promise函数。
+      return new MyPromise(resolve => {
+        let res = onFulfilled(this.value)
+        resolve(res)
+        // 此处不需要写reject的处理函数，executor执行过程出错会捕获错误给reject的处理函数
+      })
     }
     if (this.status === REJECTED) {
-      // 若此时promise状态为失败，立即执行onRejected
-      onRejected(this.reason)
-      return
+      return new MyPromise(resolve => {
+        let res = onRejected(this.reason)
+        resolve(res)
+      })
     }
     if (this.status === PENDING) {
-      // 若此时promise状态为处理中，注册onFulfilled函数和onRejected函数
-      this.resolves.push(onFulfilled)
-      this.rejects.push(onRejected)
+      /**
+       * 若此时promise状态为处理中，注册onFulfilled函数和onRejected函数
+       * 依然返回一个新的MyPromise，其状态改变的时刻取决于上一个MyPromise的状态改变时
+       */
+      return new MyPromise((resolve, reject) => {
+        this.resolves.push(() => {
+          try {
+            let res = onFulfilled(this.value)
+            resolve(res)
+          } catch (e) {
+            reject(e)
+          }
+        })
+        this.rejects.push(() => {
+          try {
+            let res = onRejected(this.reason)
+            resolve(res)
+          } catch (e) {
+            reject(e)
+          }
+        })
+      })
     }
   }
 }

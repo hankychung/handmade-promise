@@ -106,6 +106,35 @@ function uniqueStatus() {
   })
 }
 
+function chain() {
+  return new Promise(resolve => {
+    let result = ''
+    let pro = new MyPromise(resolve => {
+      resolve('ok')
+    })
+
+    pro
+      .then(res => {
+        result += res
+        throw 'error'
+      })
+      .then(
+        res => {},
+        rej => {
+          result += rej
+          return 'last'
+        }
+      )
+      .then(res => {
+        result += res
+      })
+
+    setTimeout(() => {
+      resolve(result)
+    }, 500)
+  })
+}
+
 test('resolve test', done => {
   resolve().then(res => {
     expect(res).toBe('ok')
@@ -157,6 +186,13 @@ test('handlePromiseValue test', done => {
 test('uniqueStatus test', done => {
   uniqueStatus().then(res => {
     expect(res).toBe('data')
+    done()
+  })
+})
+
+test('chain test', done => {
+  chain().then(res => {
+    expect(res).toBe('okerrorlast')
     done()
   })
 })
