@@ -84,6 +84,28 @@ function handlePromiseValue() {
   })
 }
 
+function uniqueStatus() {
+  return new Promise(resolve => {
+    let res = ''
+    let promise = new MyPromise((resolve, reject) => {
+      resolve('data')
+      reject('error')
+    })
+
+    promise.then(
+      data => {
+        res += data
+      },
+      error => {
+        res += error
+      }
+    )
+    setTimeout(() => {
+      resolve(res)
+    }, 50)
+  })
+}
+
 test('resolve test', done => {
   resolve().then(res => {
     expect(res).toBe('ok')
@@ -128,6 +150,13 @@ test('multipleCall test', done => {
 test('handlePromiseValue test', done => {
   handlePromiseValue().then(res => {
     expect(res).toBe('last pro')
+    done()
+  })
+})
+
+test('uniqueStatus test', done => {
+  uniqueStatus().then(res => {
+    expect(res).toBe('data')
     done()
   })
 })

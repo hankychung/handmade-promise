@@ -25,18 +25,19 @@ class MyPromise {
     // 成功/失败后执行的回调函数，由于一个promise可能会被多次调用，用数组来存储PENDING时注册的回调函数
     this.resolves = []
     this.rejects = []
-
+    // 箭头函数确保this的指向始终为当前的promise实例
     const resolve = value => {
-      /**
-       * 若值是一个MyPromise实例，等待其执行原MyPromise实例传入的resolve/reject函数
-       * 即返回的value.then(resolve, reject)，实际上是原MyPromise将执行的完成嫁接于此MyPromise之上
-       */
-      if (value instanceof MyPromise) {
-        return value.then(resolve, reject)
-      }
       // 异步模拟，实际应为micro task
-      // 箭头函数确保this的指向始终为当前的promise实例
       setTimeout(() => {
+        // 确保状态是未完成的情况下进行，否则有可能即处理onFulfilled又处理onRejected
+        if (this.status !== PENDING) return
+        /**
+         * 若值是一个MyPromise实例，等待其执行原MyPromise实例传入的resolve/reject函数
+         * 即返回的value.then(resolve, reject)，实际上是原MyPromise将执行的完成嫁接于此MyPromise之上
+         */
+        if (value instanceof MyPromise) {
+          return value.then(resolve, reject)
+        }
         this.status = FULFILLED
         this.value = value
         this.resolves.forEach(fn => {
@@ -46,10 +47,11 @@ class MyPromise {
     }
 
     const reject = reason => {
-      if (reason instanceof MyPromise) {
-        return reason.then(resolve, reject)
-      }
       setTimeout(() => {
+        if (this.status !== PENDING) return
+        if (reason instanceof MyPromise) {
+          return reason.then(resolve, reject)
+        }
         this.status = REJECTED
         this.reason = reason
         this.rejects.forEach(fn => {
