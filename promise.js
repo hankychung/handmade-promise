@@ -27,6 +27,20 @@ class MyPromise {
     this.rejects = []
     // 箭头函数确保this的指向始终为当前的promise实例
     const resolve = value => {
+      /**
+       * 若回调函数接收的参数是一个MyPromise实例，等待其执行原MyPromise实例传入的resolve/reject函数
+       * 即返回的value.then(resolve, reject)，实际上是原MyPromise将执行的完成嫁接于此MyPromise之上
+       */
+      if (value instanceof MyPromise) {
+        return value.then(
+          res => {
+            resolve(res)
+          },
+          err => {
+            reject(err)
+          }
+        )
+      }
       // 异步模拟，实际应为micro task
       setTimeout(() => {
         // 确保状态是未完成的情况下进行，否则有可能即处理onFulfilled又处理onRejected
@@ -40,6 +54,16 @@ class MyPromise {
     }
 
     const reject = reason => {
+      if (reason instanceof MyPromise) {
+        return reason.then(
+          res => {
+            resolve(res)
+          },
+          err => {
+            reject(err)
+          }
+        )
+      }
       setTimeout(() => {
         if (this.status !== PENDING) return
         if (reason instanceof MyPromise) {
@@ -121,11 +145,12 @@ function resolvePromise(promise2, res, resolve, reject) {
     res.then(
       data => {
         /**
+         * deleted! 在constructor里实现此功能
          * 若成功回调函数的参数是一个MyPromise实例，等待其执行原MyPromise实例传入的resolve/reject函数
          * 即返回的res.then(resolve, reject)，实际上是原MyPromise将执行的完成嫁接于此MyPromise之上
          * 此处需递归调用，若是promise就不断往里解析
          */
-        resolvePromise(promise2, data, resolve, reject)
+        resolve(data)
       },
       error => {
         reject(error)
@@ -137,16 +162,28 @@ function resolvePromise(promise2, res, resolve, reject) {
 }
 
 // test
-new MyPromise(resolve => {
+new MyPromise((resolve, reject) => {
   setTimeout(() => {
-    resolve('first')
+    reject(
+      new MyPromise((res, rej) => {
+        res(
+          new MyPromise((res, rej) => {
+            res('inner aga')
+          })
+        )
+      })
+    )
   }, 1000)
 })
   .then(res => {
     console.log(res)
     return new MyPromise((resolve, reject) => {
       setTimeout(() => {
-        reject(res + 'second')
+        reject(
+          new MyPromise((resolve, rej) => {
+            resolve(res + 'second inner')
+          })
+        )
       }, 1000)
     })
   })
@@ -160,7 +197,7 @@ new MyPromise(resolve => {
       })
     },
     err => {
-      console.log(err)
+      console.log('skip', err)
       return new MyPromise((resolve, reject) => {
         setTimeout(() => {
           reject(err + 'err-third')
