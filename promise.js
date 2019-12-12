@@ -123,7 +123,7 @@ function resolvePromise(promise2, res, resolve, reject) {
         /**
          * 若成功回调函数的参数是一个MyPromise实例，等待其执行原MyPromise实例传入的resolve/reject函数
          * 即返回的res.then(resolve, reject)，实际上是原MyPromise将执行的完成嫁接于此MyPromise之上
-         * 此处需递归调用
+         * 此处需递归调用，若是promise就不断往里解析
          */
         resolvePromise(promise2, data, resolve, reject)
       },
